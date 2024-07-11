@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from recipes.models import Tag, Ingridient
+from recipes.models import Ingridient, Recipe, Tag
 
 User = get_user_model()
 
@@ -70,3 +70,12 @@ class IngridientSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'measurement_unit')
         model = Ingridient
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=True, allow_null=True)
+
+    class Meta:
+        fields = ('id', 'tags', 'author', 'ingridients',
+                  'name', 'image', 'text', 'cooking_time')
+        model = Recipe

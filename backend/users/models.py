@@ -44,7 +44,6 @@ class FoodgramUser(AbstractUser):
         return self.username
 
 
-'''
 class Subscription(models.Model):
     user = models.ForeignKey(FoodgramUser, on_delete=models.CASCADE)
     subscription = models.ForeignKey(FoodgramUser, on_delete=models.CASCADE,
@@ -61,4 +60,3 @@ class Subscription(models.Model):
                 name='self_subscribe_prevent'
             )
         ]
-'''
