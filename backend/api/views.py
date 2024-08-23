@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, IngredientFilter
 from api.permissions import IsAdminOrOwnerOrReadOnly
 from api.serializers import (AvatarSerializer, TagSerializer,
                              IngredientSerializer, RecipeSerializer,
@@ -121,10 +121,8 @@ class IngredientViewSet(TagsIngredientsMixViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {
-        'name': ['istartswith'],
-    }
+    filter_backends = (IngredientFilter,)
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
