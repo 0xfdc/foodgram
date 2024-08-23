@@ -1,6 +1,7 @@
 asgiref==3.8.1
 certifi==2024.7.4
 cffi==1.16.0
+chardet==5.2.0
 charset-normalizer==3.3.2
 coreapi==2.3.3
 coreschema==0.0.4
@@ -14,6 +15,7 @@ djangorestframework-simplejwt==4.8.0
 djoser==2.1.0
 flake8==6.0.0
 flake8-isort==6.0.0
+fonttools==4.53.1
 idna==3.7
 isort==5.13.2
 itypes==1.2.0
@@ -27,8 +29,10 @@ pycodestyle==2.10.0
 pycparser==2.22
 pyflakes==3.0.1
 PyJWT==2.8.0
+python-dotenv==1.0.1
 python3-openid==3.2.0
 pytz==2024.1
+reportlab==4.2.2
 requests==2.32.3
 requests-oauthlib==2.0.0
 six==1.16.0

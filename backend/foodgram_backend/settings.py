@@ -5,14 +5,11 @@ from django.core.management.utils import get_random_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-j*%)*lh2@x)5z+q#^61lg@*imdm3m+-_&40=s7kv1b*nv9t&c-'
-# os.getenv('SECRET_KEY', get_random_secret_key())
+os.getenv('SECRET_KEY', get_random_secret_key())
 
-DEBUG = True
-# os.getenv('DEBUG', False) == 'True'
+os.getenv('DEBUG', False) == 'True'
 
-ALLOWED_HOSTS = []
-# os.getenv('ALLOWED_HOSTS', '').split(',')
+os.getenv('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -62,8 +59,12 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
@@ -121,7 +122,7 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'user_create': 'api.serializers.UserCreateSerializer',
+        'user_create': 'api.serializers.CreateUserSerializer',
         'user': 'api.serializers.UserListSerializer',
         'current_user': 'api.serializers.UserListSerializer',
     },
@@ -138,7 +139,7 @@ EMAIL_MAX_LENGTH = 254
 
 TAG_MAX_LENGTH = 32
 
-INGRIDIENT_NAME_MAX_LENGTH = 128
+INGREDIENT_NAME_MAX_LENGTH = 128
 
 MEASUREMENT_UNIT_MAX_LENGTH = 64
 

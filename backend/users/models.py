@@ -45,9 +45,10 @@ class FoodgramUser(AbstractUser):
 
 
 class Subscription(models.Model):
-    user = models.ForeignKey(FoodgramUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(FoodgramUser, on_delete=models.CASCADE,
+                             related_name='subscriptions')
     subscription = models.ForeignKey(FoodgramUser, on_delete=models.CASCADE,
-                                     related_name='subscriptions')
+                                     related_name='subscribers')
 
     class Meta:
         constraints = [

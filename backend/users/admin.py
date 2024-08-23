@@ -3,4 +3,9 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import FoodgramUser
 
-admin.site.register(FoodgramUser, UserAdmin)
+
+class FoodgramUserAdmin(UserAdmin):
+    search_fields = ('username', 'email')
+
+
+admin.site.register(FoodgramUser, FoodgramUserAdmin)
