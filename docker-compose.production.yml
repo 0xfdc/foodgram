@@ -23,13 +23,14 @@ services:
       - media:/app/media/
   
   frontend:
-    container_name: foodgram-front
-    build: ./frontend
+    image: 0xarch/foodgram_frontend
+    env_file: ./.env
+    depends_on:
+      - db
     volumes:
       - ./frontend/:/app/result_build/
   
   nginx:
-    container_name: foodgram-proxy
     image: nginx:1.25.4-alpine
     depends_on:
      - backend
