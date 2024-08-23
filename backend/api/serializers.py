@@ -46,10 +46,14 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
 
     def get_is_subscribed(self, obj):
-        subscriptions_list = obj.subscriptions.values_list(
-            'subscription', flat=True
-        )
-        return self.context['request'].user.id in subscriptions_list
+        if (
+            'request' not in self.context or
+            self.context['request'].user.is_anonymous
+        ):
+            return False
+        return Subscription.objects.filter(
+            user=self.context['request'].user, subscription=obj
+        ).exists()
 
 
 class AvatarSerializer(serializers.ModelSerializer):

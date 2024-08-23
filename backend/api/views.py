@@ -230,21 +230,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 Recipe.objects.get(pk=cart_recipe.recipe_id),
                 context={'request': request}
             ).data['ingredients']
-            ingredients_data = dict()
             for ingredient in ingredients:
-                if ingredients_data[ingredient["name"]]:
-                    ingredients_data[
-                        ingredient["name"]
-                    ]["amount"] += ingredient["amount"]
-                else:
-                    ingredients_data[ingredient["name"]] = {
-                        'amount': ingredient["amount"],
-                        'unit': ingredient["measurement_unit"]
-                    }
-            for ingredient in ingredients_data.keys():
                 data = (
-                    f'{ingredient} - {ingredients_data[ingredient]["amount"]} '
-                    f'{ingredients_data[ingredient]["unit"]}'
+                    f'{ingredient["name"]} - {ingredient["amount"]} '
+                    f'{ingredient["measurement_unit"]}'
                 )
                 current_height -= PAGE_HEIGHT_DECREMENT
                 pdf.drawString(
