@@ -20,7 +20,7 @@ services:
       - db
     volumes:
       - static:/backend_static
-      - media:/media
+      - media:/app/media
   
   frontend:
     image: 0xarch/foodgram_frontend
