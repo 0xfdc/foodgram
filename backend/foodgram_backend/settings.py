@@ -5,11 +5,11 @@ from django.core.management.utils import get_random_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-os.getenv('SECRET_KEY', get_random_secret_key())
+SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 
-os.getenv('DEBUG', False) == 'True'
+DEBUG = os.getenv('DEBUG', False) == 'True'
 
-os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
