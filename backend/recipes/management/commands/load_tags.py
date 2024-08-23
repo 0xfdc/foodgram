@@ -6,6 +6,7 @@ from recipes.models import Tag
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
+        Tag.objects.all().delete()
         data = [
             {'name': 'Завтрак', 'slug': 'breakfast'},
             {'name': 'Обед', 'slug': 'lunch'},

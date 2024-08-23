@@ -9,6 +9,7 @@ from recipes.models import Ingredient
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
+        Ingredient.objects.all().delete()
         data_path = settings.BASE_DIR
         with open(f'{data_path}/data/ingredients.csv', 'r',
                   encoding='utf-8') as file:
