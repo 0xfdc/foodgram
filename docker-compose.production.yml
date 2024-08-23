@@ -41,6 +41,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./frontend/build:/usr/share/nginx/html/
       - ./docs/:/usr/share/nginx/html/api/docs/
-      - ./data/:/data/
+      - ./data/:/app/data/
       - static:/backend_static
       - media:/media
