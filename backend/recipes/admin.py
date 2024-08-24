@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from recipes.models import Ingredient, Recipe, RecipeTags, RecipeIngredients, Tag
+from recipes.models import (Ingredient, Recipe, RecipeTags, RecipeIngredients,
+                            Tag)
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -39,15 +40,17 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'author',
+        'pub_date'
     )
     search_fields = ('name',)
-    list_filter = ('tags',)
+    list_filter = ('name', 'tags', 'author')
     list_display_links = ('name',)
+    readonly_fields = ('favorited', 'pub_date')
     inlines = (TagInline, IngredientInline)
 
-    def get_favorited(self, obj):
-        return obj.favorite.count()
-    get_favorited.short_description = 'Добавлений в избранное'
+    def favorited(self, obj):
+        return obj.favorited.count()
+    favorited.short_description = 'Добавлений в избранное'
 
 
 class RecipeInLine(admin.StackedInline):

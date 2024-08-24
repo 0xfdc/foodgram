@@ -74,11 +74,15 @@ class Recipe(models.Model):
             ),
         ),
     )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('name',)
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.name
@@ -130,7 +134,9 @@ class Favorite(models.Model):
     user = models.ForeignKey(
         User, related_name='favorite', on_delete=models.CASCADE
     )
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, related_name='favorited', on_delete=models.CASCADE
+    )
 
     class Meta:
         constraints = [
