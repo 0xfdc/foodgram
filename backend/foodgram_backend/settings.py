@@ -57,16 +57,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', 5432)
+if os.getenv('DEBUG', False) == 'True':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'django'),
+            'USER': os.getenv('POSTGRES_USER', 'django'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', ''),
+            'PORT': os.getenv('DB_PORT', 5432)
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -122,7 +130,6 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'user_create': 'api.serializers.CreateUserSerializer',
         'user': 'api.serializers.UserListSerializer',
         'current_user': 'api.serializers.UserListSerializer',
     },
@@ -132,15 +139,3 @@ DJOSER = {
     },
     'HIDE_USERS': False
 }
-
-USER_TEXTFIELD_MAX_LENGTH = 150
-
-EMAIL_MAX_LENGTH = 254
-
-TAG_MAX_LENGTH = 32
-
-INGREDIENT_NAME_MAX_LENGTH = 128
-
-MEASUREMENT_UNIT_MAX_LENGTH = 64
-
-RECIPE_NAME_MAX_LENGTH = 256

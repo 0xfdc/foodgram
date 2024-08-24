@@ -6,5 +6,5 @@ from api.views import short_link_redirect
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('s/<int:pk>', short_link_redirect),
+    path('s/<str:hash>', short_link_redirect),
 ]

@@ -1,9 +1,10 @@
 import io
 
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.http import FileResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet as DjoserUserViewset
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -20,10 +21,10 @@ from api.permissions import IsAdminOrOwnerOrReadOnly
 from api.serializers import (AvatarSerializer, TagSerializer,
                              IngredientSerializer, RecipeSerializer,
                              UserSubscriptionsSerializer, SubscribeSerializer,
-                             FavoriteSerializer, RecipeMinifiedSerializer,
-                             CartSerializer)
+                             FavoriteSerializer, CartSerializer)
 from api.viewsets import (TagsIngredientsMixViewSet, ListViewSet)
-from recipes.models import Tag, Ingredient, Recipe, Favorite, ShoppingCart
+from recipes.models import (Tag, Ingredient, Recipe, Favorite, ShoppingCart,
+                            RecipeIngredients)
 from users.models import Subscription
 
 User = get_user_model()
@@ -35,23 +36,27 @@ class AvatarView(APIView):
 
     def put(self, request):
         user = User.objects.get(username=request.user)
-        if ('avatar' in request.data):
-            serializer = AvatarSerializer(user, data=request.data,
-                                          partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(
-                serializer.to_representation(user),
-                status=status.HTTP_200_OK
-            )
-        else:
-            http_status = status.HTTP_400_BAD_REQUEST
-            error = {'avatar': ["Обязательное поле."]}
-            return Response(error, status=http_status)
+        serializer = AvatarSerializer(
+            user,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.to_representation(user),
+            status=status.HTTP_200_OK
+        )
 
     def delete(self, request):
         user = User.objects.get(username=request.user)
-        serializer = AvatarSerializer(user, data={}, partial=True)
+        serializer = AvatarSerializer(
+            user,
+            data={},
+            partial=True,
+            context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save(avatar=None)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -60,41 +65,37 @@ class AvatarView(APIView):
 class UserViewSet(DjoserUserViewset):
     http_method_names = ('get', 'post', 'delete')
 
-    @action(detail=True, methods=['post', 'delete'],
+    @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
-        if request.method == 'POST':
-            subscription = get_object_or_404(User, pk=id)
-            serializer = SubscribeSerializer(
-                data={
-                    'user': self.request.user.id,
-                    'subscription': subscription.id
-                },
-                context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            subscription_serializer = UserSubscriptionsSerializer(
-                subscription,
-                context={'request': request}
-            )
+        subscription = get_object_or_404(User, pk=id)
+        serializer = SubscribeSerializer(
+            data={
+                'user': self.request.user.id,
+                'subscription': subscription.id
+            },
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
+        )
+
+    @subscribe.mapping.delete
+    def unsubscribe(self, request, id=None):
+        subscription_user = get_object_or_404(
+            User, pk=id
+        )
+        subscribes_deleted, _ = Subscription.objects.filter(
+            user=request.user.id, subscription=subscription_user.id
+        ).delete()
+        if subscribes_deleted == 0:
             return Response(
-                subscription_serializer.data, status=status.HTTP_201_CREATED
+                {'errors': 'Вы не подписаны на этого пользователя.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            subscription_user = get_object_or_404(
-                User, pk=id
-            )
-            subscription = Subscription.objects.filter(
-                user=request.user.id, subscription=subscription_user.id
-            )
-            if not subscription.exists():
-                return Response(
-                    {'errors': 'Вы не подписаны на этого пользователя.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscriptionListViewSet(ListViewSet):
@@ -139,79 +140,78 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_name='get-link',
             url_path='get-link')
     def getlink(self, request, pk=None):
+        hash = Recipe.objects.get(pk=pk).hash
         response = {
-            'short-link': f'https://{request.META["HTTP_HOST"]}/s/{pk}/'
+            'short-link': f'http://{request.META["HTTP_HOST"]}/s/{hash}/'
         }
         return Response(
             response,
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post', 'delete'],
+    @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        if request.method == 'POST':
-            recipe = get_object_or_404(Recipe, pk=pk)
-            serializer = FavoriteSerializer(
-                data={
-                    'user': self.request.user.id,
-                    'recipe': recipe.id
-                },
-                context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            favorite_serializer = RecipeMinifiedSerializer(recipe)
-            return Response(
-                favorite_serializer.data, status=status.HTTP_201_CREATED
-            )
-        else:
-            favorite_recipe = get_object_or_404(
-                Recipe, pk=pk
-            )
-            favorite = Favorite.objects.filter(
-                user=request.user.id, recipe=favorite_recipe.id
-            )
-            if not favorite.exists():
-                return Response(
-                    {'errors': 'Такого рецепта нет в избранном.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            favorite.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = FavoriteSerializer(
+            data={
+                'user': self.request.user.id,
+                'recipe': recipe.id
+            },
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
+        )
 
-    @action(detail=True, methods=['post', 'delete'],
+    @favorite.mapping.delete
+    def favorite_delete(self, request, pk=None):
+        favorite_recipe = get_object_or_404(
+            Recipe, pk=pk
+        )
+        favorite_deleted, _ = Favorite.objects.filter(
+            user=request.user.id, recipe=favorite_recipe.id
+        ).delete()
+        if not favorite_deleted:
+            return Response(
+                {'errors': 'Такого рецепта нет в избранном.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        if request.method == 'POST':
-            recipe = get_object_or_404(Recipe, pk=pk)
-            serializer = CartSerializer(
-                data={
-                    'user': self.request.user.id,
-                    'recipe': recipe.id
-                },
-                context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            cart_serializer = RecipeMinifiedSerializer(recipe)
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = CartSerializer(
+            data={
+                'user': self.request.user.id,
+                'recipe': recipe.id
+            },
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
+        )
+
+    @shopping_cart.mapping.delete
+    def shopping_cart_delete(self, request, pk=None):
+        cart_recipe = get_object_or_404(
+            Recipe, pk=pk
+        )
+        recipes_deleted, _ = ShoppingCart.objects.filter(
+            user=request.user.id, recipe=cart_recipe.id
+        ).delete()
+        if not recipes_deleted:
             return Response(
-                cart_serializer.data, status=status.HTTP_201_CREATED
+                {'errors': 'Такого рецепта нет в списке покупок.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            cart_recipe = get_object_or_404(
-                Recipe, pk=pk
-            )
-            cart = ShoppingCart.objects.filter(
-                user=request.user.id, recipe=cart_recipe.id
-            )
-            if not cart.exists():
-                return Response(
-                    {'errors': 'Такого рецепта нет в списке покупок.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            cart.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
@@ -223,29 +223,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         pdfmetrics.registerFont(
             TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
         )
-        pdf.setFont("DejaVuSerif", 14)
-        cart_recipes = request.user.shopping_cart.all()
-        ingredients_list = list()
-        ingredients_data = dict()
-        for cart_recipe in cart_recipes:
-            ingredients = RecipeSerializer(
-                Recipe.objects.get(pk=cart_recipe.recipe_id),
-                context={'request': request}
-            ).data['ingredients']
-            for ingredient in ingredients:
-                name = ingredient["name"].capitalize()
-                if name in ingredients_list:
-                    ingredients_data[name]['amount'] += ingredient["amount"]
-                else:
-                    ingredients_list.append(name)
-                    ingredients_data[name] = {
-                        'amount': ingredient["amount"],
-                        'unit': ingredient["measurement_unit"]
-                    }
-        for name in ingredients_data.keys():
+        pdf.setFont('DejaVuSerif', 14)
+        ingredients = RecipeIngredients.objects.filter(
+            recipe__recipes_shoppingcart__user=request.user
+        ).values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(sum=Sum('amount'))
+        for ingredient in ingredients:
             data = (
-                f'{name} - {ingredients_data[name]["amount"]} '
-                f'{ingredients_data[name]["unit"]}'
+                f'{ingredient["ingredient__name"]} - {ingredient["sum"]} '
+                f'{ingredient["ingredient__measurement_unit"]}'
             )
             current_height -= PAGE_HEIGHT_DECREMENT
             pdf.drawString(
@@ -262,5 +249,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
 
-def short_link_redirect(request, pk):
-    return redirect('api:recipes-detail', pk=pk)
+def short_link_redirect(request, hash):
+    recipe_id = get_object_or_404(
+        Recipe,
+        hash=hash
+    ).id
+    return HttpResponseRedirect(
+        request.build_absolute_uri(f'/recipes/{recipe_id}/')
+    )

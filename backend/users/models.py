@@ -1,31 +1,29 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from users.validators import UsernameValidator, NotMeUsernameValidator
+from foodgram_backend import constants
+from users.validators import UsernameValidator
 
 
 class FoodgramUser(AbstractUser):
     username = models.CharField(
         'Ник пользователя',
-        max_length=settings.USER_TEXTFIELD_MAX_LENGTH,
+        max_length=constants.USER_TEXTFIELD_MAX_LENGTH,
         unique=True,
         validators=[
-            UsernameValidator(),
-            NotMeUsernameValidator()
+            UsernameValidator()
         ]
     )
     first_name = models.CharField(
-        'Имя', max_length=settings.USER_TEXTFIELD_MAX_LENGTH, blank=False
+        'Имя', max_length=constants.USER_TEXTFIELD_MAX_LENGTH, blank=False
     )
     last_name = models.CharField(
         'Фамилия',
-        max_length=settings.USER_TEXTFIELD_MAX_LENGTH,
+        max_length=constants.USER_TEXTFIELD_MAX_LENGTH,
         blank=False
     )
     email = models.EmailField(
         'E-mail',
-        max_length=settings.EMAIL_MAX_LENGTH,
         blank=False,
         unique=True
     )
@@ -34,6 +32,9 @@ class FoodgramUser(AbstractUser):
         null=True,
         default=None
     )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -51,6 +52,8 @@ class Subscription(models.Model):
                                      related_name='subscribers')
 
     class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'subscription'],

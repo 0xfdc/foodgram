@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from recipes.models import (Ingredient, Recipe, RecipeTags, RecipeIngredients,
-                            Tag)
+from recipes.models import (Ingredient, Recipe, RecipeIngredients, Tag,
+                            Favorite, ShoppingCart)
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -13,11 +13,6 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('name',)
     list_display_links = ('name',)
-
-
-class TagInline(admin.StackedInline):
-    model = RecipeTags
-    extra = 0
 
 
 class IngredientAdmin(admin.ModelAdmin):
@@ -34,6 +29,7 @@ class IngredientAdmin(admin.ModelAdmin):
 class IngredientInline(admin.StackedInline):
     model = RecipeIngredients
     extra = 0
+    min_num = 1
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -46,10 +42,10 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('name', 'tags', 'author')
     list_display_links = ('name',)
     readonly_fields = ('favorited', 'pub_date')
-    inlines = (TagInline, IngredientInline)
+    inlines = (IngredientInline,)
 
     def favorited(self, obj):
-        return obj.favorited.count()
+        return obj.recipes_favorite.count()
     favorited.short_description = 'Добавлений в избранное'
 
 
@@ -58,6 +54,20 @@ class RecipeInLine(admin.StackedInline):
     extra = 0
 
 
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'recipe')
+    list_display_links = ('user',)
+    search_fields = ('user',)
+
+
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'recipe')
+    list_display_links = ('user',)
+    search_fields = ('user',)
+
+
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(ShoppingCart, ShoppingCartAdmin)
