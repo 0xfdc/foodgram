@@ -242,9 +242,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         'amount': ingredient["amount"],
                         'unit': ingredient["measurement_unit"]
                     }
-        for (key, value) in ingredients_data:
+        for name in ingredients_data.keys():
             data = (
-                f'{key} - {value["amount"]} {value["unit"]}'
+                f'{name} - {ingredients_data[name]["amount"]} '
+                f'{ingredients_data[name]["unit"]}'
             )
             current_height -= PAGE_HEIGHT_DECREMENT
             pdf.drawString(
