@@ -238,10 +238,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     ingredients_data[name]['amount'] += ingredient["amount"]
                 else:
                     ingredients_list.append(name)
-                    ingredients_data[name]['amount'] = ingredient["amount"]
-                    ingredients_data[name]['unit'] = (
-                        ingredient["measurement_unit"]
-                    )
+                    ingredients_data[name] = {
+                        'amount': ingredient["amount"],
+                        'unit': ingredient["measurement_unit"]
+                    }
         for (key, value) in ingredients_data:
             data = (
                 f'{key} - {value["amount"]} {value["unit"]}'
