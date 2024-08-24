@@ -225,22 +225,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         pdf.setFont("DejaVuSerif", 14)
         cart_recipes = request.user.shopping_cart.all()
+        ingredients_list = list()
+        ingredients_data = dict()
         for cart_recipe in cart_recipes:
             ingredients = RecipeSerializer(
                 Recipe.objects.get(pk=cart_recipe.recipe_id),
                 context={'request': request}
             ).data['ingredients']
             for ingredient in ingredients:
-                data = (
-                    f'{ingredient["name"]} - {ingredient["amount"]} '
-                    f'{ingredient["measurement_unit"]}'
-                )
-                current_height -= PAGE_HEIGHT_DECREMENT
-                pdf.drawString(
-                    40,
-                    current_height,
-                    data.encode('utf-8')
-                )
+                name = ingredient["name"].capitalize()
+                if name in ingredients_list:
+                    ingredients_data[name]['amount'] += ingredient["amount"]
+                else:
+                    ingredients_list.append(name)
+                    ingredients_data[name]['amount'] = ingredient["amount"]
+                    ingredients_data[name]['unit'] = (
+                        ingredient["measurement_unit"]
+                    )
+        for (key, value) in ingredients_data:
+            data = (
+                f'{key} - {value["amount"]} {value["unit"]}'
+            )
+            current_height -= PAGE_HEIGHT_DECREMENT
+            pdf.drawString(
+                40,
+                current_height,
+                data.encode('utf-8')
+            )
         pdf.showPage()
         pdf.save()
         buffer.seek(0)
