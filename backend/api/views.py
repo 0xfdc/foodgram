@@ -35,9 +35,8 @@ class AvatarView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def put(self, request):
-        user = User.objects.get(username=request.user)
         serializer = AvatarSerializer(
-            user,
+            request.user,
             data=request.data,
             partial=True,
             context={'request': request}
@@ -45,14 +44,13 @@ class AvatarView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            serializer.to_representation(user),
+            serializer.to_representation(request.user),
             status=status.HTTP_200_OK
         )
 
     def delete(self, request):
-        user = User.objects.get(username=request.user)
         serializer = AvatarSerializer(
-            user,
+            request.user,
             data={},
             partial=True,
             context={'request': request}
@@ -90,7 +88,7 @@ class UserViewSet(DjoserUserViewset):
         subscribes_deleted, _ = Subscription.objects.filter(
             user=request.user.id, subscription=subscription_user.id
         ).delete()
-        if subscribes_deleted == 0:
+        if not subscribes_deleted:
             return Response(
                 {'errors': 'Вы не подписаны на этого пользователя.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -140,7 +138,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_name='get-link',
             url_path='get-link')
     def getlink(self, request, pk=None):
-        hash = Recipe.objects.get(pk=pk).hash
+        hash = get_object_or_404(Recipe, pk=pk).hash
         response = {
             'short-link': f'http://{request.META["HTTP_HOST"]}/s/{hash}/'
         }

@@ -49,11 +49,6 @@ class RecipeAdmin(admin.ModelAdmin):
     favorited.short_description = 'Добавлений в избранное'
 
 
-class RecipeInLine(admin.StackedInline):
-    model = Recipe
-    extra = 0
-
-
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_display_links = ('user',)

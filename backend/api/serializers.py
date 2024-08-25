@@ -196,13 +196,12 @@ class UserSubscriptionsSerializer(UserListSerializer):
         recipes_limit = self.context['request'].query_params.get(
             'recipes_limit'
         )
+        recipes = obj.recipes.all()
         if recipes_limit:
             try:
-                recipes = obj.recipes.all()[:int(recipes_limit)]
+                recipes = recipes[:int(recipes_limit)]
             except ValueError:
-                recipes = obj.recipes.all()
-        else:
-            recipes = obj.recipes.all()
+                pass
         return RecipeMinifiedSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
@@ -314,7 +313,8 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         return data
 
-    def add_ingredients(self, recipe, ingredients):
+    @staticmethod
+    def add_ingredients(recipe, ingredients):
         recipe.ingredients.clear()
         ingredients_list = [
             RecipeIngredients(
