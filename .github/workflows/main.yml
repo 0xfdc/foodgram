@@ -68,6 +68,7 @@ jobs:
     needs: 
       - build_and_push_to_docker_hub
       - build_frontend_and_push_to_docker_hub
+      - build_nginx_and_push_to_docker_hub
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
@@ -88,7 +89,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docs/*"
-        target: "foodgram/docs"
+        target: "foodgram"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
